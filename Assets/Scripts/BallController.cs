@@ -22,7 +22,7 @@ public class BallController : MonoBehaviour
     //Potencia de tiro
     public float power = 2f;
 
-
+    private LineRenderer lineRenderer;
 
 
     // Update is called once per frame
@@ -30,6 +30,13 @@ public class BallController : MonoBehaviour
     {
         HandleInput();
         SimulatePhysics();
+    }
+
+    void Start()
+    {
+        lineRenderer = GetComponent<LineRenderer>();
+
+        lineRenderer.enabled = false;
     }
 
     void SimulatePhysics()
@@ -87,8 +94,18 @@ public class BallController : MonoBehaviour
         {
             isDragging = true;
 
-            dragStartPosition =
-                GetMouseWorldPosition();
+            dragStartPosition = GetMouseWorldPosition();
+
+            lineRenderer.enabled = true;
+        }
+
+        if (isDragging)
+        {
+            Vector3 currentMousePosition = GetMouseWorldPosition();
+
+            lineRenderer.SetPosition( 0, transform.position);
+
+            lineRenderer.SetPosition( 1, currentMousePosition);
         }
 
         // button released
@@ -96,9 +113,9 @@ public class BallController : MonoBehaviour
         {
             isDragging = false;
 
-            dragEndPosition =
-                GetMouseWorldPosition();
+            dragEndPosition = GetMouseWorldPosition();
 
+            lineRenderer.enabled = false;
             
             Vector3 dragVector = dragStartPosition - dragEndPosition;
 
