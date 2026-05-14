@@ -42,6 +42,7 @@ public class BallController : MonoBehaviour
 
         if(levelComplete)
         {
+            Debug.Log("ANIMATING");
             AnimateHoleEntry();
             return;
         }
@@ -83,10 +84,16 @@ public class BallController : MonoBehaviour
         velocity += acceleration * dt;
 
         // la bola no se puede mover hacia atras
-        if (Vector3.Dot(velocity, velocity + acceleration * dt) < 0)
+        float speed = velocity.magnitude;
+
+        speed -= acceleration.magnitude * dt;
+
+        if (speed < 0)
         {
-            velocity = Vector3.zero;
+            speed = 0;
         }
+
+        velocity = velocity.normalized * speed;
 
         // actualizar position
         transform.position += velocity * dt;
@@ -134,40 +141,78 @@ public class BallController : MonoBehaviour
 
     void CheckWallCollisions()
     {
-        Collider[] hits = Physics.OverlapSphere(transform.position, radius + 0.05f);
+        GameObject[] walls = GameObject.FindGameObjectsWithTag("Wall");
 
-        bool touchingWall = false;
-
-        foreach (Collider hit in hits)
+        foreach (GameObject wall in walls)
         {
-            if (hit.CompareTag("Wall"))
+            BoxCollider box = wall.GetComponent<BoxCollider>();
+
+            Bounds bounds =  box.bounds;
+
+            // punto mas cercano aabb
+            Vector3 closestPoint;
+
+            float sphereX = transform.position.x;
+
+            if (sphereX < bounds.min.x)
             {
-                touchingWall = true;
+                closestPoint.x = bounds.min.x;
+            }
+            else if (sphereX > bounds.max.x)
+            {
+                closestPoint.x = bounds.max.x;
+            }
+            else
+            {
+                closestPoint.x = sphereX;
+            }
 
-                if (!isColliding)
-                {
-                    // punto mas cercano pared
-                    Vector3 closestPoint = hit.ClosestPoint(transform.position);
+            float sphereY = transform.position.y;
 
-                    // colision normal
-                    Vector3 normal = (transform.position - closestPoint).normalized;
+            if (sphereY < bounds.min.y)
+            {
+                closestPoint.y = bounds.min.y;
+            }
+            else if (sphereY > bounds.max.y)
+            {
+                closestPoint.y = bounds.max.y;
+            }
+            else
+            {
+                closestPoint.y = sphereY;
+            }
 
-                    HandleWallCollision(normal);
+            float sphereZ = transform.position.z;
 
-                    // rebote
-                    transform.position = closestPoint + normal * (radius + 0.01f);
+            if (sphereZ < bounds.min.z)
+            {
+                closestPoint.z = bounds.min.z;
+            }
+            else if (sphereZ > bounds.max.z)
+            {
+                closestPoint.z = bounds.max.z;
+            }
+            else
+            {
+                closestPoint.z = sphereZ;
+            }
 
-                    isColliding = true;
-                }
+            // punto mas cercano bola
+            Vector3 difference = transform.position - closestPoint;
+            float distance = difference.magnitude;
+
+            // colision
+            if (distance < radius)
+            {
+                Vector3 normal = difference.normalized;
+
+                HandleWallCollision(normal);
+
+                // rebote
+                transform.position = closestPoint + normal * radius;
 
                 break;
             }
-        }
-
-        // reseteo colision
-        if (!touchingWall)
-        {
-            isColliding = false;
         }
     }
 
@@ -208,7 +253,12 @@ public class BallController : MonoBehaviour
 
             Vector3 direction = (dragStartPosition - currentMousePosition).normalized;
 
-            float lineLength = Mathf.Clamp((dragStartPosition - currentMousePosition).magnitude, 0f, 5f);
+            float lineLength = (dragStartPosition - currentMousePosition).magnitude;
+
+            if (lineLength > 5f)
+            {
+                lineLength = 5f;
+            }
 
             lineRenderer.SetPosition( 0, transform.position);
             lineRenderer.SetPosition(1, transform.position + direction * lineLength);
@@ -250,40 +300,37 @@ public class BallController : MonoBehaviour
     }
 
     void CheckHole()
-    {
-        // distancia hacia el agujero
-        float distance = Vector3.Distance(transform.position, hole.position);
+    { // distancia hacia el agujero
+      float distance = Vector3.Distance(transform.position, hole.position); 
 
         // Bola en agujero
-        if (distance <= holeRadius)
-        {
+        if (distance <= holeRadius) { 
+            
             // velocidad de entrada
-            if (velocity.magnitude <= maxGoalSpeed)
-            {
-                levelComplete = true;
-
-                velocity = Vector3.zero;
-            }
-        }
+            if (velocity.magnitude <= maxGoalSpeed) 
+            { 
+                levelComplete = true; 
+                velocity = Vector3.zero; 
+            } 
+        } 
     }
 
-    void AnimateHoleEntry()
+        void AnimateHoleEntry()
     {
-        Vector3 targetPosition = new Vector3(hole.position.x, transform.position.y, hole.position.z);
-
-        transform.position = Vector3.Lerp( transform.position, targetPosition, 5f * Time.deltaTime);
-
-        transform.position += Vector3.down * 1.5f * Time.deltaTime;
-
-         if (transform.position.y <= -2f)
-    {
-        gameObject.SetActive(false);
-
-        Debug.Log("LEVEL COMPLETE");
+        Vector3 targetPosition = new Vector3(hole.position.x, transform.position.y, hole.position.z); 
+        Vector3 direction = targetPosition - transform.position; direction.y = 0; float speed = 5f; 
+        transform.position += direction.normalized * speed * Time.deltaTime; 
+        //desaparece la bola
+        transform.position += Vector3.down * 1.5f * Time.deltaTime; 
+        if (transform.position.y <= -2f) 
+        { 
+            gameObject.SetActive(false); 
+            Debug.Log("LEVEL COMPLETE"); 
+        } 
     }
-    }
-
 }
+
+
 
 
 
