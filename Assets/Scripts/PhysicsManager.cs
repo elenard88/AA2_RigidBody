@@ -11,7 +11,10 @@ public class PhysicsManager : MonoBehaviour
     public float restitution = 0.8f;
     private Vector3 velocity;
     private float angularVelocity;
+
     private string currentSurface = "Grass";
+
+    public float stepTime = 0.01f;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -29,8 +32,6 @@ public class PhysicsManager : MonoBehaviour
 
     void SimulatePhysics()
     {
-        float dt = Time.deltaTime;
-
         // parar movimiento
         if (velocity.magnitude < 0.01f)
         {
@@ -47,12 +48,12 @@ public class PhysicsManager : MonoBehaviour
         Vector3 acceleration = frictionForce / mass;
 
         // actualizar velocity
-        velocity += acceleration * dt;
+        velocity += acceleration * stepTime;
 
         // la bola no se puede mover hacia atras
         float speed = velocity.magnitude;
 
-        speed -= acceleration.magnitude * dt;
+        speed -= acceleration.magnitude * stepTime;
 
         if (speed < 0)
         {
@@ -62,7 +63,7 @@ public class PhysicsManager : MonoBehaviour
         velocity = velocity.normalized * speed;
 
         // actualizar position
-        transform.position += velocity * dt;
+        transform.position += velocity * stepTime;
 
         angularVelocity = velocity.magnitude / radius;
 
@@ -71,7 +72,7 @@ public class PhysicsManager : MonoBehaviour
         {
             Vector3 rotationAxis = Vector3.Cross(Vector3.up, velocity.normalized);
 
-            transform.Rotate(rotationAxis, angularVelocity * Mathf.Rad2Deg * dt, Space.World);
+            transform.Rotate(rotationAxis, angularVelocity * Mathf.Rad2Deg * stepTime, Space.World);
         }
     }
 
