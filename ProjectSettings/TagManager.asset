@@ -9,6 +9,10 @@ TagManager:
   - Sand
   - Hole
   - Wall
+  - Metal
+  - Foam
+  - Wood
+  - Bumper
   layers:
   - Default
   - TransparentFX
