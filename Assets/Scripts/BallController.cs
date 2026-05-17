@@ -2,10 +2,7 @@ using UnityEngine;
 
 public class BallController : MonoBehaviour
 {
-    [Header("Collision")]
-    
-    private bool isColliding;
-
+    [Header("Shoot")]
     //Potencia de tiro
     public float power = 2f;
 
@@ -19,8 +16,6 @@ public class BallController : MonoBehaviour
 
     private PhysicsManager physicsManager;
 
-
-
     void Start()
     {
         lineRenderer = GetComponent<LineRenderer>();
@@ -28,20 +23,18 @@ public class BallController : MonoBehaviour
         physicsManager = GetComponent<PhysicsManager>();
 
         lineRenderer.positionCount = 2;
-
         lineRenderer.enabled = false;
     }
 
-    // Update is called once per frame
+
+     // Update is called once per frame
     void Update()
     {
         HandleInput();
     }
-    
+
     void HandleInput()
     {
-        Debug.Log(lineRenderer);
-        Debug.Log(physicsManager);
         // button pressed
         if (Input.GetMouseButtonDown(0))
         {
@@ -65,7 +58,7 @@ public class BallController : MonoBehaviour
                 lineLength = 5f;
             }
 
-            lineRenderer.SetPosition( 0, transform.position);
+            lineRenderer.SetPosition(0, transform.position);
             lineRenderer.SetPosition(1, transform.position + direction * lineLength);
         }
 
@@ -79,10 +72,9 @@ public class BallController : MonoBehaviour
             dragEndPosition = GetMouseWorldPosition();
 
             lineRenderer.enabled = false;
-            
+
             Vector3 dragVector = dragStartPosition - dragEndPosition;
 
-            
             dragVector.y = 0;
 
             // fuerza magnitud
@@ -105,13 +97,4 @@ public class BallController : MonoBehaviour
 
         return point;
     }
-
-    
-
-        
 }
-
-
-
-
-
