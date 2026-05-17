@@ -14,17 +14,18 @@ public class PhysicsManager : MonoBehaviour
 
     private string currentSurface = "Grass";
 
-    public float stepTime = 0.01f;
+    public float stepTime = 0.005f;
 
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
-    {
-        
-    }
+    [Header("Air")]
+    public float airResistance = 0.5f;
+    private bool isGrounded;
+    private Vector3 groundNormal = Vector3.up;
+    private float currentHeight;
 
     // Update is called once per frame
     void Update()
     {
+        CheckGround();
         SimulatePhysics();
         CheckWallCollisions();
         DetectSurface();
@@ -32,79 +33,166 @@ public class PhysicsManager : MonoBehaviour
 
     void SimulatePhysics()
     {
-        // parar movimiento
-        if (velocity.magnitude < 0.01f)
+        if (isGrounded)
         {
-            velocity = Vector3.zero;
-            return;
+            SimulateGroundPhysics();
+        }
+        else
+        {
+            SimulateAirPhysics();
         }
 
-        // fuerza friccion
-        float frictionMagnitude = friction * mass * gravity;
-
-        Vector3 frictionForce = -velocity.normalized * frictionMagnitude;
-
-        // segunda ley newton
-        Vector3 acceleration = frictionForce / mass;
-
-        // actualizar velocity
-        velocity += acceleration * stepTime;
-
-        // la bola no se puede mover hacia atras
-        float speed = velocity.magnitude;
-
-        speed -= acceleration.magnitude * stepTime;
-
-        if (speed < 0)
-        {
-            speed = 0;
-        }
-
-        velocity = velocity.normalized * speed;
-
-        // actualizar position
         transform.position += velocity * stepTime;
 
-        angularVelocity = velocity.magnitude / radius;
+        CorrectGroundPenetration();
 
-        // rotacion
+        RotateBall();
+    }
+
+    void SimulateGroundPhysics()
+    {
+        // Cancelar velocidad vertical al estar en suelo
+        Vector3 verticalVelocity = Vector3.Dot(velocity, groundNormal) * groundNormal;
+        if (Vector3.Dot(verticalVelocity, groundNormal) < 0)
+        {
+            velocity -= verticalVelocity; // eliminar componente que penetra el suelo
+        }
+
+        Vector3 gravityFull = Vector3.down * gravity * mass;
+        Vector3 normalForce = groundNormal * Vector3.Dot(gravityFull, groundNormal);
+        Vector3 gravityParallel = gravityFull - normalForce;
+
+        float normalMagnitude = Vector3.Dot(gravityFull, groundNormal) * -1f;
+        float frictionMagnitude = friction * normalMagnitude;
+
+        Vector3 netForce;
+
+        if (velocity.magnitude < 0.01f)
+        {
+            if (gravityParallel.magnitude <= frictionMagnitude)
+            {
+                velocity = Vector3.zero;
+                return;
+            }
+            else
+            {
+                netForce = gravityParallel;
+            }
+        }
+        else
+        {
+            Vector3 frictionForce = -velocity.normalized * frictionMagnitude;
+            netForce = gravityParallel + frictionForce;
+        }
+
+        velocity += (netForce / mass) * stepTime;
+    }
+
+    void SimulateAirPhysics()
+    {
+        // EN EL AIRE
+        Vector3 gravityForce = Vector3.down * gravity * mass;
+        Vector3 dragForce = Vector3.zero;
+
+        if (currentHeight > 1f)
+        {
+            float rho = 1.225f;
+            float Cd = 0.47f;
+            float A = Mathf.PI * radius * radius;
+            float speed = velocity.magnitude;
+            dragForce = -velocity.normalized * (0.5f * rho * speed * speed * Cd * A);
+        }
+
+        velocity += ((gravityForce + dragForce) / mass) * stepTime;
+    }
+
+    void RotateBall()
+    {
+        // Rotación visual
+        angularVelocity = velocity.magnitude / radius;
         if (velocity.magnitude > 0.01f)
         {
             Vector3 rotationAxis = Vector3.Cross(Vector3.up, velocity.normalized);
-
             transform.Rotate(rotationAxis, angularVelocity * Mathf.Rad2Deg * stepTime, Space.World);
         }
     }
 
-    void DetectSurface()
+    void CheckGround()
     {
         RaycastHit hit;
 
-        // ignorar layer bola
         int layerMask = ~LayerMask.GetMask("Ball");
 
-        if (Physics.Raycast(transform.position, Vector3.down, out hit, 5f, layerMask))
+        if (Physics.Raycast(transform.position, Vector3.down, out hit, 10f, layerMask ))
         {
-            Debug.Log(hit.collider.name);
+            currentHeight = transform.position.y;
 
-            currentSurface = hit.collider.tag;
+            isGrounded = hit.distance <= radius + 0.05f;
 
-            switch (currentSurface)
+            if (isGrounded)
             {
-                case "Grass":
-                    friction = 0.4f;
-                    break;
+                groundNormal = hit.normal;
+            }
+        }
+        else
+        {
+            isGrounded = false;
+            groundNormal = Vector3.up;
+            currentHeight = transform.position.y;
+        }
+    }
 
-                case "Ice":
-                    friction = 0.1f;
-                    break;
+    void CorrectGroundPenetration()
+    {
+        RaycastHit hit;
+        int layerMask = ~LayerMask.GetMask("Ball");
 
-                case "Sand":
-                    friction = 0.6f;
-                    break;
+        // Solo corregir si estamos muy cerca del suelo
+        if (Physics.Raycast(transform.position, Vector3.down, out hit, radius * 1.1f, layerMask))
+        {
+            float penetration = radius - hit.distance;
+            if (penetration > 0)
+            {
+                transform.position += hit.normal * penetration;
+
+                // Cancelar velocidad hacia el suelo al corregir
+                if (Vector3.Dot(velocity, hit.normal) < 0)
+                {
+                    velocity -= Vector3.Dot(velocity, hit.normal) * hit.normal;
+                }
             }
         }
     }
+
+        void DetectSurface()
+        {
+            RaycastHit hit;
+
+            // ignorar layer bola
+            int layerMask = ~LayerMask.GetMask("Ball");
+
+            if (Physics.Raycast(transform.position, Vector3.down, out hit, 5f, layerMask))
+            {
+                Debug.Log(hit.collider.name);
+
+                currentSurface = hit.collider.tag;
+
+                switch (currentSurface)
+                {
+                    case "Grass":
+                        friction = 0.4f;
+                        break;
+
+                    case "Ice":
+                        friction = 0.1f;
+                        break;
+
+                    case "Sand":
+                        friction = 0.6f;
+                        break;
+                }
+            }
+        }
 
 
     void CheckObstacleTag(string tagName)
