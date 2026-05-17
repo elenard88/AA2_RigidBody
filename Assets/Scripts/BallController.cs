@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 public class BallController : MonoBehaviour
 {
@@ -7,22 +7,11 @@ public class BallController : MonoBehaviour
     private float currentHeight = 0f;
 
     [Header("Collision")]
-    public float restitution = 0.8f;
+    
     private bool isColliding;
 
-    [Header("Hole")]
-    public Transform hole;
-    public float holeRadius = 0.5f;
-    public float maxGoalSpeed = 0.5f;
-
-
-    public float mass = 1.0f;
-    public float radius = 0.25f;
-    public float friction = 0.4f;
-    private float gravity = 9.81f;
-
-    private Vector3 velocity;
-    private float angularVelocity;
+    //Potencia de tiro
+    public float power = 2f;
 
     // Inputs
     private Vector3 dragStartPosition;
@@ -30,44 +19,19 @@ public class BallController : MonoBehaviour
 
     private bool isDragging;
 
-    //Potencia de tiro
-    public float power = 2f;
-
     private LineRenderer lineRenderer;
 
-    private string currentSurface = "Grass";
-
-    private bool levelComplete;
+    private PhysicsManager physicsManager;
 
 
-    // Update is called once per frame
-    void Update()
-    {
-
-        if(levelComplete)
-        {
-            Debug.Log("ANIMATING");
-            AnimateHoleEntry();
-            return;
-        }
-
-        HandleInput();
-        DetectSurface();
-        SimulatePhysics();
-        CheckWallCollisions();
-        CheckHole();
-    }
 
     void Start()
     {
         lineRenderer = GetComponent<LineRenderer>();
 
-        lineRenderer.enabled = false;
-    }
+        physicsManager = GetComponent<PhysicsManager>();
 
-    void SimulatePhysics()
-    {
-        float dt = Time.deltaTime;
+        lineRenderer.positionCount = 2;
 
         if (isGrounded)
         {
@@ -159,10 +123,13 @@ public class BallController : MonoBehaviour
                 }
             }
         }
+        lineRenderer.enabled = false;
     }
 
-    void DetectSurface()
+    // Update is called once per frame
+    void Update()
     {
+        HandleInput();
         RaycastHit hit;
         int layerMask = ~LayerMask.GetMask("Ball");
 
@@ -194,105 +161,11 @@ public class BallController : MonoBehaviour
             currentHeight = transform.position.y;
         }
     }
-
-    void CheckWallCollisions()
-    {
-        GameObject[] walls = GameObject.FindGameObjectsWithTag("Wall");
-
-        foreach (GameObject wall in walls)
-        {
-            BoxCollider box = wall.GetComponent<BoxCollider>();
-
-            Bounds bounds =  box.bounds;
-
-            // punto mas cercano aabb
-            Vector3 closestPoint;
-
-            float sphereX = transform.position.x;
-
-            if (sphereX < bounds.min.x)
-            {
-                closestPoint.x = bounds.min.x;
-            }
-            else if (sphereX > bounds.max.x)
-            {
-                closestPoint.x = bounds.max.x;
-            }
-            else
-            {
-                closestPoint.x = sphereX;
-            }
-
-            float sphereY = transform.position.y;
-
-            if (sphereY < bounds.min.y)
-            {
-                closestPoint.y = bounds.min.y;
-            }
-            else if (sphereY > bounds.max.y)
-            {
-                closestPoint.y = bounds.max.y;
-            }
-            else
-            {
-                closestPoint.y = sphereY;
-            }
-
-            float sphereZ = transform.position.z;
-
-            if (sphereZ < bounds.min.z)
-            {
-                closestPoint.z = bounds.min.z;
-            }
-            else if (sphereZ > bounds.max.z)
-            {
-                closestPoint.z = bounds.max.z;
-            }
-            else
-            {
-                closestPoint.z = sphereZ;
-            }
-
-            // punto mas cercano bola
-            Vector3 difference = transform.position - closestPoint;
-            float distance = difference.magnitude;
-
-            // colision
-            if (distance < radius)
-            {
-                Vector3 normal = difference.normalized;
-
-                HandleWallCollision(normal);
-
-                // rebote
-                transform.position = closestPoint + normal * radius;
-
-                break;
-            }
-        }
-    }
-
-
-    void HandleWallCollision(Vector3 normal)
-    {
-        velocity = Vector3.Reflect(velocity, normal);
-
-        velocity *= restitution;
-    }
-
-    public void ShootBall(Vector3 direction, float force)
-    {
-        velocity = direction.normalized * force / mass;
-    }
-
+    
     void HandleInput()
     {
-
-        if (levelComplete)
-        {
-            return;
-        }
-
+        Debug.Log(lineRenderer);
+        Debug.Log(physicsManager);
         // button pressed
         if (Input.GetMouseButtonDown(0))
         {
@@ -320,6 +193,8 @@ public class BallController : MonoBehaviour
             lineRenderer.SetPosition(1, transform.position + direction * lineLength);
         }
 
+
+
         // button released
         if (Input.GetMouseButtonUp(0) && isDragging)
         {
@@ -337,7 +212,7 @@ public class BallController : MonoBehaviour
             // fuerza magnitud
             float force = dragVector.magnitude * power;
 
-            ShootBall(dragVector, force);
+            physicsManager.ShootBall(dragVector, force);
         }
     }
 
@@ -355,33 +230,7 @@ public class BallController : MonoBehaviour
         return point;
     }
 
-    void CheckHole()
-    { // distancia hacia el agujero
-      float distance = Vector3.Distance(transform.position, hole.position); 
+    
 
-        // Bola en agujero
-        if (distance <= holeRadius) { 
-            
-            // velocidad de entrada
-            if (velocity.magnitude <= maxGoalSpeed) 
-            { 
-                levelComplete = true; 
-                velocity = Vector3.zero; 
-            } 
-        } 
-    }
-
-        void AnimateHoleEntry()
-    {
-        Vector3 targetPosition = new Vector3(hole.position.x, transform.position.y, hole.position.z); 
-        Vector3 direction = targetPosition - transform.position; direction.y = 0; float speed = 5f; 
-        transform.position += direction.normalized * speed * Time.deltaTime; 
-        //desaparece la bola
-        transform.position += Vector3.down * 1.5f * Time.deltaTime; 
-        if (transform.position.y <= -2f) 
-        { 
-            gameObject.SetActive(false); 
-            Debug.Log("LEVEL COMPLETE"); 
-        } 
-    }
+        
 }
