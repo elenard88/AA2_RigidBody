@@ -36,7 +36,7 @@ public class LevelLoader : MonoBehaviour
     { // distancia hacia el agujero
         float distance = Vector3.Distance(transform.position, hole.position);
 
-        // Bola en agujero
+        // bola en agujero
         if (distance <= holeRadius)
         {
 
@@ -45,7 +45,8 @@ public class LevelLoader : MonoBehaviour
             {
                 levelComplete = true;
                 physicsManager.StopBall();
-                
+                physicsManager.DisablePhysics();
+
                 Debug.Log("Level Complete");
             }
         }

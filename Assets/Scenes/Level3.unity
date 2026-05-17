@@ -983,6 +983,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Hole
       objectReference: {fileID: 0}
+    - target: {fileID: 46552144533337161, guid: 08658cfb2c3bada44b4d0846d8b53726, type: 3}
+      propertyPath: m_Layer
+      value: 6
+      objectReference: {fileID: 0}
     - target: {fileID: 7174058229008290818, guid: 08658cfb2c3bada44b4d0846d8b53726, type: 3}
       propertyPath: m_LocalScale.x
       value: 1.2490274
@@ -1001,7 +1005,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7174058229008290818, guid: 08658cfb2c3bada44b4d0846d8b53726, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.06
+      value: 0.055
       objectReference: {fileID: 0}
     - target: {fileID: 7174058229008290818, guid: 08658cfb2c3bada44b4d0846d8b53726, type: 3}
       propertyPath: m_LocalPosition.z

@@ -19,7 +19,6 @@ public class CameraFollow : MonoBehaviour
         Vector3 smoothedPosition = Vector3.Lerp(transform.position, desiredPosition, smoothSpeed * Time.deltaTime);
 
         transform.position = smoothedPosition;
-        //Vector3 lookTarget = target.position + Vector3.forward * 5f;
 
         transform.LookAt(target.position);
     }

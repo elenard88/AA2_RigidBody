@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 public class PhysicsManager : MonoBehaviour
@@ -12,6 +13,9 @@ public class PhysicsManager : MonoBehaviour
     private Vector3 velocity;
     private float angularVelocity;
 
+    private float inertia;
+    public float rollingResistance = 0.02f;
+
     private string currentSurface = "Grass";
 
     public float stepTime = 0.005f;
@@ -22,9 +26,22 @@ public class PhysicsManager : MonoBehaviour
     private Vector3 groundNormal = Vector3.up;
     private float currentHeight;
 
+    private bool physicsEnabled = true;
+
+    private void Start()
+    {
+
+        inertia = (2f / 5f) * mass * radius * radius;
+    }
+
     // Update is called once per frame
     void Update()
     {
+        if (!physicsEnabled)
+        {
+            return;
+        }
+
         CheckGround();
         SimulatePhysics();
         CheckWallCollisions();
@@ -62,8 +79,7 @@ public class PhysicsManager : MonoBehaviour
         Vector3 normalForce = groundNormal * Vector3.Dot(gravityFull, groundNormal);
         Vector3 gravityParallel = gravityFull - normalForce;
 
-        float normalMagnitude = Vector3.Dot(gravityFull, groundNormal) * -1f;
-        float frictionMagnitude = friction * normalMagnitude;
+        float frictionMagnitude = friction * mass * gravity;
 
         Vector3 netForce;
 
@@ -86,6 +102,21 @@ public class PhysicsManager : MonoBehaviour
         }
 
         velocity += (netForce / mass) * stepTime;
+
+        //força normal
+        float normalForceMagnitude = mass * gravity;
+
+        //torque
+        float rollingTorque = - rollingResistance * normalForceMagnitude * radius;
+
+        //acceleracio angular
+        float angularAcceleration = rollingTorque / inertia;
+        angularVelocity += angularAcceleration * stepTime;
+
+        if (angularVelocity < 0)
+        {
+            angularVelocity = 0;
+        }
     }
 
     void SimulateAirPhysics()
@@ -109,7 +140,11 @@ public class PhysicsManager : MonoBehaviour
     void RotateBall()
     {
         // Rotación visual
-        angularVelocity = velocity.magnitude / radius;
+        if (isGrounded)
+        {
+            angularVelocity = velocity.magnitude / radius;
+        }
+       
         if (velocity.magnitude > 0.01f)
         {
             Vector3 rotationAxis = Vector3.Cross(Vector3.up, velocity.normalized);
@@ -121,7 +156,7 @@ public class PhysicsManager : MonoBehaviour
     {
         RaycastHit hit;
 
-        int layerMask = ~LayerMask.GetMask("Ball");
+        int layerMask = ~LayerMask.GetMask("Ball", "Hole");
 
         if (Physics.Raycast(transform.position, Vector3.down, out hit, 10f, layerMask ))
         {
@@ -145,7 +180,7 @@ public class PhysicsManager : MonoBehaviour
     void CorrectGroundPenetration()
     {
         RaycastHit hit;
-        int layerMask = ~LayerMask.GetMask("Ball");
+        int layerMask = ~LayerMask.GetMask("Ball", "Hole");
 
         // Solo corregir si estamos muy cerca del suelo
         if (Physics.Raycast(transform.position, Vector3.down, out hit, radius * 1.1f, layerMask))
@@ -169,7 +204,7 @@ public class PhysicsManager : MonoBehaviour
             RaycastHit hit;
 
             // ignorar layer bola
-            int layerMask = ~LayerMask.GetMask("Ball");
+            int layerMask = ~LayerMask.GetMask("Ball", "Hole");
 
             if (Physics.Raycast(transform.position, Vector3.down, out hit, 5f, layerMask))
             {
@@ -205,7 +240,7 @@ public class PhysicsManager : MonoBehaviour
 
             Bounds bounds = box.bounds;
 
-            // punto mas cercano aabb
+            // punto mas cercano (test aabb)
             Vector3 closestPoint;
 
             float sphereX = transform.position.x;
@@ -325,6 +360,11 @@ public class PhysicsManager : MonoBehaviour
     public void StopBall()
     {
         velocity = Vector3.zero;
+    }
+
+    public void DisablePhysics()
+    {
+        physicsEnabled = false;
     }
 
 }
