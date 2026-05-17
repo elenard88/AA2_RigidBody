@@ -45,7 +45,8 @@ public class LevelLoader : MonoBehaviour
             {
                 levelComplete = true;
                 physicsManager.StopBall();
-                
+                physicsManager.DisablePhysics();
+
                 Debug.Log("Level Complete");
             }
         }
