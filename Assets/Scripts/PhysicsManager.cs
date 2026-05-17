@@ -79,7 +79,7 @@ public class PhysicsManager : MonoBehaviour
     {
         RaycastHit hit;
 
-        // Ignore Ball layer
+        // ignorar layer bola
         int layerMask = ~LayerMask.GetMask("Ball");
 
         if (Physics.Raycast(transform.position, Vector3.down, out hit, 5f, layerMask))
@@ -178,11 +178,11 @@ public class PhysicsManager : MonoBehaviour
                 switch (tagName)
                 {
                     case "Metal":
-                        restitutionValue = 0.9f;
+                        restitutionValue = 0.95f;
                         break;
 
                     case "Foam":
-                        restitutionValue = 0.2f;
+                        restitutionValue = 0.1f;
                         break;
 
                     case "Wood":
@@ -190,14 +190,13 @@ public class PhysicsManager : MonoBehaviour
                         break;
 
                     case "Bumper":
-                        restitutionValue = 1.2f;
+                        restitutionValue = 1.5f;
                         break;
 
                     case "Wall":
                         restitutionValue = 0.8f;
                         break;
                 }
-
                 HandleWallCollision(normal, restitutionValue);
 
                 // rebote
@@ -218,11 +217,11 @@ public class PhysicsManager : MonoBehaviour
         CheckObstacleTag("Bumper");
      }
 
-    void HandleWallCollision(Vector3 normal, float restituitionValue)
+    void HandleWallCollision(Vector3 normal, float restitutionValue)
     {
         velocity = Vector3.Reflect(velocity, normal);
 
-        velocity *= restitution;
+        velocity *= restitutionValue;
     }
 
     public void ShootBall(Vector3 direction, float force)
