@@ -591,8 +591,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   target: {fileID: 489806185}
-  offset: {x: 0, y: 10, z: -10}
-  smoothSpeed: 5
+  offset: {x: 50, y: 56, z: -50}
+  positionSmoothSpeed: 5
+  rotationSmoothSpeed: 5
+  followTargetRotation: 0
 --- !u!1001 &1390747905
 PrefabInstance:
   m_ObjectHideFlags: 0

@@ -895,8 +895,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   target: {fileID: 489806185}
-  offset: {x: 0, y: 10, z: -10}
-  smoothSpeed: 5
+  offset: {x: 50, y: 56, z: -50}
+  positionSmoothSpeed: 5
+  rotationSmoothSpeed: 5
+  followTargetRotation: 0
 --- !u!4 &1422276651 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 7174058229008290818, guid: 08658cfb2c3bada44b4d0846d8b53726, type: 3}
