@@ -1,4 +1,6 @@
+using System.Collections;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class LevelLoader : MonoBehaviour
 {
@@ -7,6 +9,11 @@ public class LevelLoader : MonoBehaviour
     public Transform hole;
     public float holeRadius = 0.5f;
     public float maxGoalSpeed = 0.5f;
+
+    [Header("Lose Conditions")]
+    public int maxBorderContact = 2;
+    public int currentBorderContacts = 0;
+    public float minDistanceToRespawn = -5f;
 
     private bool levelComplete;
 
@@ -22,6 +29,13 @@ public class LevelLoader : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        if(transform.position.y < minDistanceToRespawn && !levelComplete)
+        {
+            StartCoroutine(ReloadLevel(0f));
+            return;
+        }
+
+
         if (levelComplete)
         {
             Debug.Log("ANIMATING");
@@ -72,7 +86,26 @@ public class LevelLoader : MonoBehaviour
         if (transform.position.y <= -2f)
         {
             gameObject.SetActive(false);
+            int next = SceneManager.GetActiveScene().buildIndex + 1;
+            if (next >= SceneManager.sceneCountInBuildSettings)
+                SceneManager.LoadScene(0);
+            else
+                SceneManager.LoadScene(next);
             
         }
+    }
+
+    public void RegisterBorderContact()
+    {
+        currentBorderContacts++;
+        Debug.Log($"Rebotes: {currentBorderContacts}/{maxBorderContact}");
+        if (currentBorderContacts > maxBorderContact)
+            StartCoroutine(ReloadLevel(1.5f));
+    }
+
+    IEnumerator ReloadLevel(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 }

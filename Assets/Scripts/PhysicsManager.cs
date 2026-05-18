@@ -81,7 +81,10 @@ public class PhysicsManager : MonoBehaviour
         Vector3 normalForce = new Vector3(dotGG * groundNormal.x, dotGG * groundNormal.y, dotGG * groundNormal.z);
         Vector3 gravityParallel = gravityFull - normalForce;
 
-        float frictionMagnitude = friction * mass * gravity;
+        //força normal
+        float normalForceMagnitude = Mathf.Abs(Vector3.Dot(gravityFull, groundNormal));
+
+        float frictionMagnitude = friction * normalForceMagnitude;
 
         Vector3 netForce;
 
@@ -104,9 +107,6 @@ public class PhysicsManager : MonoBehaviour
         }
 
         velocity += (netForce / mass) * stepTime;
-
-        //força normal
-        float normalForceMagnitude = mass * gravity;
 
         //torque
         float rollingTorque = - rollingResistance * normalForceMagnitude * radius;
@@ -160,7 +160,7 @@ public class PhysicsManager : MonoBehaviour
 
         int layerMask = ~LayerMask.GetMask("Ball", "Hole");
 
-        if (Physics.Raycast(transform.position, Vector3.down, out hit, 10f, layerMask ))
+        if (Physics.SphereCast(transform.position,radius* 0.9f ,Vector3.down, out hit, radius + 0.1f, layerMask ))
         {
             currentHeight = transform.position.y;
 
@@ -318,14 +318,14 @@ public class PhysicsManager : MonoBehaviour
                         break;
 
                     case "Bumper":
-                        restitutionValue = 1.5f;
+                        restitutionValue = 0.95f;
                         break;
 
                     case "Wall":
                         restitutionValue = 0.8f;
                         break;
                 }
-                HandleWallCollision(normal, restitutionValue);
+                HandleWallCollision(normal, restitutionValue, tagName);
 
                 // rebote
                 transform.position = closestPoint + normal * radius;
@@ -345,11 +345,14 @@ public class PhysicsManager : MonoBehaviour
         CheckObstacleTag("Bumper");
      }
 
-    void HandleWallCollision(Vector3 normal, float restitutionValue)
+    void HandleWallCollision(Vector3 normal, float restitutionValue, string tag)
     {
         velocity = Vector3.Reflect(velocity, normal);
-
         velocity *= restitutionValue;
+
+        if (tag == "Wall")
+            GetComponent<LevelLoader>().RegisterBorderContact();
+
     }
 
     public void ShootBall(Vector3 direction, float force)
