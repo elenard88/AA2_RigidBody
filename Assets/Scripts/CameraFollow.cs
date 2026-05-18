@@ -1,26 +1,25 @@
 using UnityEngine;
-
-
 public class CameraFollow : MonoBehaviour
 {
     public Transform target;
-
-    // Offset dsd la bola
-    public Vector3 offset = new Vector3(0, 5, -7);
-
-    public float smoothSpeed = 5f;
+    public Vector3 offset = new Vector3(50, 56, -50); 
+    public float positionSmoothSpeed = 5f;
+    public float rotationSmoothSpeed = 5f;
+    public bool followTargetRotation = false;
 
     void LateUpdate()
     {
-        // posicion
-        Vector3 desiredPosition = target.position + offset;
+        if (target == null) return;
 
-        // interpolacion
-        Vector3 smoothedPosition = Vector3.Lerp(transform.position, desiredPosition, smoothSpeed * Time.deltaTime);
+        Vector3 desiredPosition = followTargetRotation
+            ? target.position + target.TransformDirection(offset)
+            : target.position + offset;
 
-        transform.position = smoothedPosition;
+        float t = 1f - Mathf.Pow(0.001f, Time.deltaTime * positionSmoothSpeed);
+        transform.position = Vector3.Lerp(transform.position, desiredPosition, t);
 
-        transform.LookAt(target.position);
+        // Mira directamente a la pelota, sin desvío
+        Quaternion targetRotation = Quaternion.LookRotation(target.position - transform.position);
+        transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSmoothSpeed * Time.deltaTime);
     }
 }
-

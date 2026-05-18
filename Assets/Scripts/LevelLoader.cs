@@ -48,7 +48,10 @@ public class LevelLoader : MonoBehaviour
 
     void CheckHole()
     { // distancia hacia el agujero
-        float distance = Vector3.Distance(transform.position, hole.position);
+        float distance = Vector2.Distance(
+        new Vector2(transform.position.x, transform.position.z),
+        new Vector2(hole.position.x, hole.position.z)
+);
 
         // bola en agujero
         if (distance <= holeRadius)
