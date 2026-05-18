@@ -69,14 +69,16 @@ public class PhysicsManager : MonoBehaviour
     void SimulateGroundPhysics()
     {
         // Cancelar velocidad vertical al estar en suelo
-        Vector3 verticalVelocity = Vector3.Dot(velocity, groundNormal) * groundNormal;
-        if (Vector3.Dot(verticalVelocity, groundNormal) < 0)
+        float dotVG = velocity.x * groundNormal.x + velocity.y * groundNormal.y + velocity.z * groundNormal.z;
+        Vector3 verticalVelocity = new Vector3(dotVG * groundNormal.x, dotVG * groundNormal.y, dotVG * groundNormal.z);
+        if ((verticalVelocity.x * groundNormal.x + verticalVelocity.y * groundNormal.y + verticalVelocity.z * groundNormal.z) < 0)
         {
             velocity -= verticalVelocity; // eliminar componente que penetra el suelo
         }
 
         Vector3 gravityFull = Vector3.down * gravity * mass;
-        Vector3 normalForce = groundNormal * Vector3.Dot(gravityFull, groundNormal);
+        float dotGG = gravityFull.x * groundNormal.x + gravityFull.y * groundNormal.y + gravityFull.z * groundNormal.z;
+        Vector3 normalForce = new Vector3(dotGG * groundNormal.x, dotGG * groundNormal.y, dotGG * groundNormal.z);
         Vector3 gravityParallel = gravityFull - normalForce;
 
         float frictionMagnitude = friction * mass * gravity;
@@ -190,10 +192,12 @@ public class PhysicsManager : MonoBehaviour
             {
                 transform.position += hit.normal * penetration;
 
+                float dotVN = velocity.x * hit.normal.x + velocity.y * hit.normal.y + velocity.z * hit.normal.z;
+
                 // Cancelar velocidad hacia el suelo al corregir
-                if (Vector3.Dot(velocity, hit.normal) < 0)
+                if (dotVN < 0)
                 {
-                    velocity -= Vector3.Dot(velocity, hit.normal) * hit.normal;
+                    velocity -= new Vector3(dotVN * hit.normal.x, dotVN * hit.normal.y, dotVN * hit.normal.z);
                 }
             }
         }
