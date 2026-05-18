@@ -318,7 +318,7 @@ public class PhysicsManager : MonoBehaviour
                         break;
 
                     case "Bumper":
-                        restitutionValue = 0.95f;
+                        restitutionValue = 1.5f;
                         break;
 
                     case "Wall":
